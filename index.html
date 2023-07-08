@@ -65,9 +65,8 @@
                 border-color: #6a6363;
                 border-style: solid;
                 border-width: 0 0 1px 0;
+                border-radius: 0;
                 font-family: inherit;
-                resize: none;
-                overflow-y: hidden
             }
 
             .count {
@@ -210,19 +209,6 @@
                 vapsNumbers.appendChild(fragment);
             }
 
-            function initTextareas() {
-                const areas = document.getElementsByTagName('textarea');
-                for (const elem of areas) {
-                    elem.setAttribute('style', `height: ${elem.scrollHeight}px`);
-                    elem.addEventListener('input', onInput);
-                }
-
-                function onInput() {
-                    this.style.height = 0;
-                    this.style.height = `${this.scrollHeight}px`;
-                }
-            }
-
             function initPhoneMask(elem) {
                 IMask(elem, {
                     mask: '+{7} (000) 000-00-00'
@@ -286,7 +272,6 @@
 
             document.addEventListener('DOMContentLoaded', () => {
                 renderCheckboxes();
-                initTextareas();
                 initPhoneMask(document.getElementById('input-phone'));
                 initPhoneMask(document.getElementById('input-consultant-phone'));
                 initDateInput(document.getElementById('input-date'));
