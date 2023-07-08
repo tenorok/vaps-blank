@@ -58,10 +58,12 @@
             }
 
             .info input,
-            .info textarea {
+            .info div[contenteditable="true"] {
                 width: 220px;
                 font-size: 16px;
                 padding-top: 2px;
+                border-color: #6a6363;
+                border-style: solid;
                 border-width: 0 0 1px 0;
                 font-family: inherit;
                 resize: none;
@@ -145,10 +147,12 @@
             footer {
                 display: flex;
                 justify-content: center;
+                gap: 20px;
                 margin: 50px 0;
             }
 
             .done {
+                opacity: 0;
                 background-image: linear-gradient(92.88deg, #455EB5 9.16%, #5643CC 43.89%, #673FD7 64.72%);
                 border-radius: 8px;
                 border-style: none;
@@ -159,7 +163,7 @@
                 font-family: "Inter UI","SF Pro Display",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Oxygen,Ubuntu,Cantarell,"Open Sans","Helvetica Neue",sans-serif;
                 font-size: 16px;
                 font-weight: 500;
-                height: 4rem;
+                height: 3rem;
                 padding: 0 1.6rem;
                 text-align: center;
                 text-shadow: rgba(0, 0, 0, 0.25) 0 3px 8px;
@@ -167,6 +171,11 @@
                 user-select: none;
                 -webkit-user-select: none;
                 touch-action: manipulation;
+            }
+
+            .done_visible {
+                opacity: 1;
+                transition: opacity .5s;
             }
 
             .done:hover {
@@ -256,9 +265,22 @@
                 });
             }
 
-            function initDone(elem, printable) {
+            function initDownload(elem, printable) {
+                elem.classList.add('done_visible');
                 elem.addEventListener('click', () => {
                     html2pdf(printable);
+                });
+            }
+
+            function initShare(elem, printable) {
+                elem.classList.add('done_visible');
+
+                elem.addEventListener('click', () => {
+                    html2pdf().from(printable).toPdf().output('datauristring').then(async(pdfAsString) => {
+                        const blob = await (await fetch(pdfAsString)).blob();
+                        const file = new File([blob], 'vaps-blank.pdf', { type: blob.type });
+                        navigator.share({ files: [file] });
+                    });
                 });
             }
 
@@ -276,9 +298,14 @@
                     document.querySelector('.count__value'),
                     38,
                 );
-                initDone(
-                    document.querySelector('.done'),
-                    document.getElementById('printable'),
+                const printable = document.getElementById('printable');
+                initDownload(
+                    document.querySelector('.download'),
+                    printable,
+                );
+                initShare(
+                    document.querySelector('.share'),
+                    printable,
                 );
             });
         </script>
@@ -297,13 +324,13 @@
                 <div class="info">
                     <dl>
                         <dt><label for="input-client">Клиент:</label></dt>
-                        <dd><textarea rows="1" id="input-client"></textarea></dd>
+                        <dd><div contenteditable="true" id="input-client"></div></dd>
                         <dt><label for="input-phone">Телефон:</label></dt>
                         <dd><input type="text" pattern="[0-9]*" id="input-phone"></dd>
                         <dt><label for="input-date">Дата:</label></dt>
-                        <dd><input type="text" id="input-date">                    </dd>
+                        <dd><input type="text" pattern="[0-9]*" id="input-date"></dd>
                         <dt><label for="input-address">Адрес:<sup>СДЭК</sup></label></dt>
-                        <dd><textarea rows="1" id="input-address"></textarea></dd>
+                        <dd><div contenteditable="true" rows="1" id="input-address"></div></dd>
                     </dl>
                     <dl>
                         <dt><label for="input-consultant">Конс-ант:</label></dt>
@@ -326,7 +353,8 @@
             </main>
         </div>
         <footer>
-            <button class="done">Получить файл</button>
+            <button class="download done">Скачать файл</button>
+            <button class="share done">Отправить файл</button>
         </footer>
 
         <script src="https://unpkg.com/imask"></script>
