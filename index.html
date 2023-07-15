@@ -184,8 +184,36 @@
         </style>
         <script>
             const APP_ID = 'VAPS_BLANK';
+            const LS_CHECKBOXES = APP_ID + '-checkboxes';
+
+            function getCheckboxesLSValues() {
+                const values = localStorage.getItem(LS_CHECKBOXES) ?? [];
+                try {
+                    return new Set(JSON.parse(values));
+                } catch (err) {
+                    return new Set();
+                }
+            }
+
+            function setCheckboxesLSValues(valuesSet) {
+                localStorage.setItem(LS_CHECKBOXES, JSON.stringify(Array.from(valuesSet)));
+            }
+
+            function addCheckboxLSValue(value) {
+                const values = getCheckboxesLSValues();
+                values.add(value);
+                setCheckboxesLSValues(values);
+            }
+
+            function delCheckboxLSValue(value) {
+                const values = getCheckboxesLSValues();
+                values.delete(value);
+                setCheckboxesLSValues(values);
+            }
 
             function renderCheckboxes() {
+                const lsValues = getCheckboxesLSValues();
+
                 const tmpl = document.getElementById('tmpl-checkbox');
                 const vapsNumbers = document.querySelector('.vaps-numbers');
                 const fragment = document.createDocumentFragment();
@@ -199,7 +227,9 @@
 
                     const checkbox = tmpl.content.querySelector('input');
                     checkbox.type = 'checkbox';
-                    checkbox.name = 'vap-number';
+                    checkbox.name = 'vap-number[]';
+                    checkbox.value = i;
+                    checkbox.checked = lsValues.has(String(i));
 
                     li.appendChild(label);
                     label.appendChild(div);
@@ -238,15 +268,32 @@
                 });
             }
 
+            function initCheckboxes(checkboxes) {
+                const values = getCheckboxesLSValues();
+                checkboxes.forEach(elem => {
+                    elem.addEventListener('change', event => {
+                        const value = event.target.value;
+                        event.target.checked
+                            ? addCheckboxLSValue(value)
+                            : delCheckboxLSValue(value);
+                    });
+                });
+            }
+
             function initVapsCount(checkboxes, outWrapper, outValue, limit) {
                 let count = 0;
 
+                function calc(elem, getCount) {
+                    outValue.innerText = getCount(elem.checked);
+                    count > limit
+                        ? outWrapper.classList.add('count_over')
+                        : outWrapper.classList.remove('count_over');
+                }
+
                 checkboxes.forEach(elem => {
+                    calc(elem, checked => checked ? ++count : count);
                     elem.addEventListener('change', event => {
-                        outValue.innerText = event.target.checked ? ++count : --count;
-                        count > limit
-                            ? outWrapper.classList.add('count_over')
-                            : outWrapper.classList.remove('count_over');
+                        calc(event.target, checked => checked ? ++count : --count);
                     });
                 });
             }
@@ -270,6 +317,15 @@
                 });
             }
 
+            function initClear(elem) {
+                elem.classList.add('done_visible');
+
+                elem.addEventListener('click', () => {
+                    setCheckboxesLSValues(new Set());
+                    window.location.reload();
+                });
+            }
+
             document.addEventListener('DOMContentLoaded', () => {
                 renderCheckboxes();
                 initPhoneMask(document.getElementById('input-phone'));
@@ -277,21 +333,24 @@
                 initDateInput(document.getElementById('input-date'));
                 initSaveableInput(document.getElementById('input-consultant'));
                 initSaveableInput(document.getElementById('input-consultant-phone'));
+                const checkboxes = document.querySelectorAll('.vaps-numbers input[type="checkbox"]');
+                initCheckboxes(checkboxes)
                 initVapsCount(
-                    document.querySelectorAll('.vaps-numbers input[type="checkbox"]'),
+                    checkboxes,
                     document.querySelector('.count'),
                     document.querySelector('.count__value'),
                     38,
                 );
                 const printable = document.getElementById('printable');
-                initDownload(
-                    document.querySelector('.download'),
-                    printable,
-                );
-                initShare(
-                    document.querySelector('.share'),
-                    printable,
-                );
+                // initDownload(
+                //     document.querySelector('.download'),
+                //     printable,
+                // );
+                // initShare(
+                //     document.querySelector('.share'),
+                //     printable,
+                // );
+                initClear(document.querySelector('.clear'));
             });
         </script>
     </head>
@@ -338,8 +397,9 @@
             </main>
         </div>
         <footer>
-            <button class="download done">Скачать файл</button>
-            <button class="share done">Отправить файл</button>
+            <!-- <button class="download done">Скачать файл</button> -->
+            <!-- <button class="share done">Отправить файл</button> -->
+            <button class="clear done">Новая форма</button>
         </footer>
 
         <script src="https://unpkg.com/imask"></script>
