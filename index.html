@@ -18,6 +18,10 @@
                 padding: 0 20px;
             }
 
+            .hidden {
+                visibility: hidden;
+            }
+
             header {
                 margin: 30px 0;
             }
@@ -274,6 +278,11 @@
                     elem.addEventListener('blur', event => {
                         setInfoLSValue(getInfoFromInputs(elems));
                     });
+                    elem.addEventListener('paste', event => {
+                        event.preventDefault();
+                        // Чтобы текст в contenteditable вставлялся тем же шрифтом (без сохранения форматированияs).
+                        document.execCommand('inserttext', false, event.clipboardData.getData('text/plain'));
+                    });
                 });
             }
 
@@ -344,22 +353,24 @@
                 });
             }
 
-            function initDownload(elem, printable) {
+            function initDownload(elem, printable, hiddenElem) {
                 elem.classList.add('done_visible');
                 elem.addEventListener('click', () => {
-                    html2pdf(printable);
+                    hiddenElem.classList.add('hidden');
+                    html2pdf(printable).finally(() => setTimeout(() => hiddenElem.classList.remove('hidden'), 500));
                 });
             }
 
-            function initShare(elem, printable) {
+            function initShare(elem, printable, hiddenElem) {
                 elem.classList.add('done_visible');
 
                 elem.addEventListener('click', () => {
+                    hiddenElem.classList.add('hidden');
                     html2pdf().from(printable).toPdf().output('datauristring').then(async(pdfAsString) => {
                         const blob = await (await fetch(pdfAsString)).blob();
                         const file = new File([blob], 'vaps-blank.pdf', { type: blob.type });
                         navigator.share({ files: [file] });
-                    });
+                    }).finally(() => setTimeout(() => hiddenElem.classList.remove('hidden'), 500));
                 });
             }
 
@@ -399,10 +410,12 @@
                 // initDownload(
                 //     document.querySelector('.download'),
                 //     printable,
+                //     document.querySelector('footer'),
                 // );
                 // initShare(
                 //     document.querySelector('.share'),
                 //     printable,
+                //     document.querySelector('footer'),
                 // );
                 initClear(document.querySelector('.clear'));
             });
@@ -424,7 +437,7 @@
                         <dt><label for="input-client">Клиент:</label></dt>
                         <dd><div contenteditable="true" id="input-client"></div></dd>
                         <dt><label for="input-phone">Телефон:</label></dt>
-                        <dd><input type="text" pattern="[0-9]*" id="input-phone"></dd>
+                        <dd><input type="text" pattern="[0-9]*" id="input-phone" value="+7"></dd>
                         <dt><label for="input-date">Дата:</label></dt>
                         <dd><input type="text" pattern="[0-9]*" id="input-date"></dd>
                         <dt><label for="input-address">Адрес:<sup>СДЭК</sup></label></dt>
@@ -434,11 +447,11 @@
                         <dt><label for="input-consultant">Конс-ант:</label></dt>
                         <dd><input type="text" id="input-consultant"></dd>
                         <dt><label for="input-consultant-phone">Телефон:</label></dt>
-                        <dd><input type="text" pattern="[0-9]*" id="input-consultant-phone"></dd>
+                        <dd><input type="text" pattern="[0-9]*" id="input-consultant-phone" value="+7"></dd>
                         <dt><label for="input-deep">Глубина:</label></dt>
-                        <dd><input type="text" id="input-deep"></dd>
+                        <dd><div contenteditable="true" rows="1" id="input-deep"></div></dd>
                         <dt><label for="input-color-char">Цв. хар.:</label></dt>
-                        <dd><input type="text" id="input-color-char"></dd>
+                        <dd><div contenteditable="true" rows="1" id="input-color-char"></div></dd>
                     </dl>
                 </div>
                 <h2 class="title">
